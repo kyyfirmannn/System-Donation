@@ -598,11 +598,18 @@ $(document).ready(function() {
         formatCurrencyInput($(this));
     });
     
-    // 4. TEST: Tombol Add Modal
+    // 4. Tombol Add Modal (Bootstrap 5)
+    const addCampaignModalEl = document.getElementById('addCampaignModal');
+    const addCampaignModal = new bootstrap.Modal(addCampaignModalEl);
+    const editCampaignModalEl = document.getElementById('editCampaignModal');
+    const editCampaignModal = new bootstrap.Modal(editCampaignModalEl);
+    const deleteCampaignModalEl = document.getElementById('deleteCampaignModal');
+    const deleteCampaignModal = new bootstrap.Modal(deleteCampaignModalEl);
+
     $('#addCampaignBtn').click(function(e) {
         e.preventDefault();
         console.log('Add button clicked - Opening modal');
-        $('#addCampaignModal').modal('show');
+        addCampaignModal.show();
     });
     
     // 5. PERBAIKAN: Tombol Edit Modal - Gunakan event delegation
@@ -615,7 +622,7 @@ $(document).ready(function() {
         console.log('Button element:', this);
         
         // Show modal DULU agar user tidak menunggu
-        $('#editCampaignModal').modal('show');
+        editCampaignModal.show();
         
         // Show loading message
         $('#editAlert').removeClass('d-none alert-danger alert-success')
@@ -678,7 +685,7 @@ $(document).ready(function() {
         
         $('#deleteCampaignTitle').text(campaignTitle);
         $('#deleteConfirmBtn').attr('href', 'campaign.php?delete=' + campaignId);
-        $('#deleteCampaignModal').modal('show');
+        deleteCampaignModal.show();
     });
     
     // 7. Add Campaign Form Submission
@@ -797,7 +804,7 @@ $(document).ready(function() {
                     
                     // Close modal and reload after 2 seconds
                     setTimeout(() => {
-                        $('#editCampaignModal').modal('hide');
+                        editCampaignModal.hide();
                         window.location.reload();
                     }, 2000);
                 } else {
