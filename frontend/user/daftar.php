@@ -65,6 +65,9 @@ $redirect = isset($_GET['redirect']) ? $_GET['redirect'] : 'index.php';
           </div>
           <form action="proses-daftar.php" method="POST">
             <input type="hidden" name="redirect" value="<?php echo $redirect; ?>">
+            <?php if (isset($_GET['error'])): ?>
+              <div class="alert alert-danger">Terjadi kesalahan saat mendaftar. Coba lagi.</div>
+            <?php endif; ?>
             <div class="mb-3">
               <label class="form-label small fw-bold text-muted">NAMA LENGKAP</label>
               <input type="text" name="nama" class="form-control form-control-custom" placeholder="Contoh: Budi Santoso" required>

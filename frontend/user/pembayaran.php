@@ -1,3 +1,16 @@
+<?php
+require_once __DIR__ . '/../../backend/config/session.php';
+require_once __DIR__ . '/../../backend/models/UserModel.php';
+
+Session::start();
+
+$nominal = $_REQUEST['nominal'] ?? 0;
+$user = null;
+if (Session::isLoggedIn()) {
+  $um = new UserModel();
+  $user = $um->getUserById(Session::get('user_id'));
+}
+?>
 <!DOCTYPE html>
 <html lang="id">
 
@@ -114,18 +127,24 @@
           <div class="summary-box d-flex justify-content-between align-items-center">
             <div>
               <small class="text-muted d-block">Total Pembayaran</small>
-              <h4 class="fw-bold mb-0 text-primary">Rp <?= number_format($_POST['nominal'] ?? 0, 0, ',', '.') ?></h4>
+              <h4 class="fw-bold mb-0 text-primary">Rp <?= number_format($nominal, 0, ',', '.') ?></h4>
             </div>
             <i class="fas fa-shield-alt text-primary opacity-50 fa-2x"></i>
           </div>
 
           <h6 class="fw-bold mb-3">Pilih Metode Pembayaran</h6>
 
-          <form action="donasi-berhasil.php" method="POST">
-            <input type="hidden" name="nominal" value="<?= $_POST['nominal'] ?? 0 ?>">
-            <input type="hidden" name="nama" value="<?= $_POST['nama'] ?? '' ?>">
-            <input type="hidden" name="email" value="<?= $_POST['email'] ?? '' ?>">
-            <input type="hidden" name="telepon" value="<?= $_POST['telepon'] ?? '' ?>">
+          <form action="proses-donasi.php" method="POST">
+            <input type="hidden" name="nominal" value="<?= htmlspecialchars($nominal) ?>">
+            <?php if ($user): ?>
+              <input type="hidden" name="nama" value="<?= htmlspecialchars($user['nama_pengguna']) ?>">
+              <input type="hidden" name="email" value="<?= htmlspecialchars($user['email']) ?>">
+              <input type="hidden" name="telepon" value="<?= htmlspecialchars($user['no_hp'] ?? '') ?>">
+            <?php else: ?>
+              <input type="hidden" name="nama" value="<?= $_POST['nama'] ?? '' ?>">
+              <input type="hidden" name="email" value="<?= $_POST['email'] ?? '' ?>">
+              <input type="hidden" name="telepon" value="<?= $_POST['telepon'] ?? '' ?>">
+            <?php endif; ?>
 
             <input type="radio" name="metode" id="bank" class="payment-option" value="Transfer Bank" required>
             <label for="bank" class="payment-label">

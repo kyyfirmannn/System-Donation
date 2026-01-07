@@ -66,22 +66,22 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item">
-                        <a class="nav-link active" href="index.html">
+                        <a class="nav-link active" href="index.php">
                             <i class="fas fa-home me-1"></i>Beranda
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="kampanye/index.html">
+                        <a class="nav-link" href="detail.php?id=1">
                             <i class="fas fa-heart me-1"></i>Kampanye
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="login.html">
+                        <a class="nav-link" href="donatur.php">
                             <i class="fas fa-sign-in-alt me-1"></i>Login
                         </a>
                     </li>
                     <li class="nav-item ms-2">
-                        <a class="btn btn-primary" href="register.html">
+                        <a class="btn btn-primary" href="daftar.php">
                             <i class="fas fa-user-plus me-1"></i>Daftar
                         </a>
                     </li>
@@ -98,7 +98,7 @@
                     <h1 class="display-4 fw-bold mb-4">Berbagi Kebaikan, Wujudkan Harapan</h1>
                     <p class="lead mb-4">Bergabunglah dengan ribuan orang baik untuk membantu mereka yang membutuhkan melalui sistem donasi yang aman dan transparan.</p>
                     <div class="d-flex flex-wrap gap-3">
-                        <a href="kampanye/index.html" class="btn btn-light btn-lg">
+                        <a href="detail.php?id=1" class="btn btn-light btn-lg">
                             <i class="fas fa-heart me-2"></i>Donasi Sekarang
                         </a>
                         <a href="#cara-kerja" class="btn btn-outline-light btn-lg">
@@ -191,7 +191,7 @@
                                 <small><i class="fas fa-clock me-1"></i> 15 hari lagi</small>
                             </div>
                             
-                            <a href="kampanye/detail.html" class="btn btn-primary w-100">
+                            <a href="detail.php?id=1" class="btn btn-primary w-100">
                                 <i class="fas fa-heart me-1"></i>Donasi Sekarang
                             </a>
                         </div>
@@ -228,7 +228,7 @@
                                 <small><i class="fas fa-clock me-1"></i> 5 hari lagi</small>
                             </div>
                             
-                            <a href="kampanye/detail.html" class="btn btn-primary w-100">
+                            <a href="detail.php?id=2" class="btn btn-primary w-100">
                                 <i class="fas fa-heart me-1"></i>Donasi Sekarang
                             </a>
                         </div>
@@ -265,7 +265,7 @@
                                 <small><i class="fas fa-clock me-1"></i> 30 hari lagi</small>
                             </div>
                             
-                            <a href="kampanye/detail.html" class="btn btn-primary w-100">
+                            <a href="detail.php?id=3" class="btn btn-primary w-100">
                                 <i class="fas fa-heart me-1"></i>Donasi Sekarang
                             </a>
                         </div>
@@ -274,7 +274,7 @@
             </div>
             
             <div class="text-center mt-4">
-                <a href="kampanye/index.html" class="btn btn-outline-primary btn-lg">
+                <a href="detail.php?id=1" class="btn btn-outline-primary btn-lg">
                     <i class="fas fa-list me-2"></i>Lihat Semua Kampanye
                 </a>
             </div>
@@ -361,10 +361,10 @@
                 <div class="col-lg-2 col-md-6 mb-4">
                     <h5 class="fw-bold mb-3">Tautan Cepat</h5>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="index.html" class="text-muted text-decoration-none">Beranda</a></li>
-                        <li class="mb-2"><a href="kampanye/index.html" class="text-muted text-decoration-none">Kampanye</a></li>
-                        <li class="mb-2"><a href="login.html" class="text-muted text-decoration-none">Login</a></li>
-                        <li class="mb-2"><a href="register.html" class="text-muted text-decoration-none">Daftar</a></li>
+                        <li class="mb-2"><a href="index.php" class="text-muted text-decoration-none">Beranda</a></li>
+                        <li class="mb-2"><a href="detail.php?id=1" class="text-muted text-decoration-none">Kampanye</a></li>
+                        <li class="mb-2"><a href="donatur.php" class="text-muted text-decoration-none">Login</a></li>
+                        <li class="mb-2"><a href="daftar.php" class="text-muted text-decoration-none">Daftar</a></li>
                     </ul>
                 </div>
                 

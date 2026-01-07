@@ -38,7 +38,7 @@ class Session {
 
     public static function requireLogin() {
         if (!self::isLoggedIn()) {
-            header('Location: ../user/login.php');
+            header('Location: /sistem-donasi/frontend/user/donatur.php');
             exit;
         }
     }
@@ -46,7 +46,7 @@ class Session {
     public static function requireAdmin() {
         self::requireLogin();
         if (!self::isAdmin()) {
-            header('Location: ../user/index.php');
+            header('Location: /sistem-donasi/frontend/user/index.php');
             exit;
         }
     }

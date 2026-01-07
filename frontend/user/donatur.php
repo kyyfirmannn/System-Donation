@@ -73,8 +73,17 @@ $redirect = isset($_GET['redirect']) ? $_GET['redirect'] : 'index.php';
             <p class="small mb-0 opacity-75">Masuk untuk melanjutkan aksi baikmu</p>
           </div>
           <div class="card-body p-4 p-md-5">
+            <?php if (isset($_GET['registered'])): ?>
+              <div class="alert alert-success">Registrasi berhasil. Silakan login.</div>
+            <?php elseif (isset($_GET['error'])): ?>
+              <div class="alert alert-danger">Email atau password salah.</div>
+            <?php endif; ?>
+
             <form action="proses-login.php" method="POST">
               <input type="hidden" name="redirect" value="<?php echo $redirect; ?>">
+              <?php if (isset($_GET['amount'])): ?>
+                <input type="hidden" name="amount" value="<?php echo htmlspecialchars($_GET['amount']); ?>">
+              <?php endif; ?>
               <div class="mb-3">
                 <label class="form-label small fw-bold text-muted">EMAIL</label>
                 <input type="email" name="email" class="form-control form-control-custom" placeholder="nama@email.com" required>

@@ -2,6 +2,7 @@
 // models/DonationModel.php
 
 require_once __DIR__.'/../config/database.php';
+require_once __DIR__ . '/CampaignModel.php';
 
 class DonationModel {
     private $db;

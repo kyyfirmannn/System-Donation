@@ -87,7 +87,7 @@
 
     <p class="text-muted">
       Terima kasih atas donasi Anda sebesar
-      <span class="amount-text">Rp <?= number_format($_POST['nominal'] ?? 2000000, 0, ',', '.') ?></span>
+      <span class="amount-text">Rp <?= number_format($_REQUEST['nominal'] ?? 2000000, 0, ',', '.') ?></span>
     </p>
 
     <div class="alert-confirm">
