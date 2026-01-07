@@ -1,3 +1,13 @@
+<?php
+require_once __DIR__ . '/../../backend/config/session.php';
+require_once __DIR__ . '/../../backend/models/CampaignModel.php';
+require_once __DIR__ . '/../../backend/models/UserModel.php';
+Session::start();
+
+$campaignModel = new CampaignModel();
+$campaigns = $campaignModel->getCampaignsForDisplay(3);
+$userModel = new UserModel();
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -71,20 +81,33 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="detail.php?id=1">
+                        <a class="nav-link" href="kampanye.php">
                             <i class="fas fa-heart me-1"></i>Kampanye
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="donatur.php">
-                            <i class="fas fa-sign-in-alt me-1"></i>Login
-                        </a>
-                    </li>
-                    <li class="nav-item ms-2">
-                        <a class="btn btn-primary" href="daftar.php">
-                            <i class="fas fa-user-plus me-1"></i>Daftar
-                        </a>
-                    </li>
+                    <?php if (Session::isLoggedIn()): ?>
+                        <li class="nav-item">
+                            <span class="nav-link">
+                                <i class="fas fa-user me-1"></i><?php echo htmlspecialchars(Session::get('user_name')); ?>
+                            </span>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <a class="btn btn-outline-danger" href="logout.php">
+                                <i class="fas fa-sign-out-alt me-1"></i>Logout
+                            </a>
+                        </li>
+                    <?php else: ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="donatur.php">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </a>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <a class="btn btn-primary" href="daftar.php">
+                                <i class="fas fa-user-plus me-1"></i>Daftar
+                            </a>
+                        </li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>
@@ -118,34 +141,34 @@
     <section class="py-5 bg-light">
         <div class="container">
             <div class="row text-center">
-                <div class="col-md-3 col-6 mb-4">
+                <div class="col-md-4 col-6 mb-4">
                     <div class="stat-card p-4 bg-white">
                         <i class="fas fa-hand-holding-heart fa-3x text-primary mb-3"></i>
-                        <h3 class="fw-bold">42</h3>
+                        <h3 class="fw-bold"><?php echo $campaignModel->countCampaigns('aktif'); ?></h3>
                         <p class="text-muted">Kampanye Aktif</p>
                     </div>
                 </div>
-                <div class="col-md-3 col-6 mb-4">
+                <div class="col-md-4 col-6 mb-4">
                     <div class="stat-card p-4 bg-white">
                         <i class="fas fa-users fa-3x text-secondary mb-3"></i>
-                        <h3 class="fw-bold">1,250+</h3>
+                        <h3 class="fw-bold"><?php echo $userModel->countDonors(); ?></h3>
                         <p class="text-muted">Donatur Bergabung</p>
                     </div>
                 </div>
-                <div class="col-md-3 col-6 mb-4">
+                <div class="col-md-4 col-6 mb-4">
                     <div class="stat-card p-4 bg-white">
                         <i class="fas fa-money-bill-wave fa-3x text-success mb-3"></i>
                         <h3 class="fw-bold">Rp 850Jt+</h3>
                         <p class="text-muted">Terkumpul</p>
                     </div>
                 </div>
-                <div class="col-md-3 col-6 mb-4">
+                <!-- <div class="col-md-3 col-6 mb-4">
                     <div class="stat-card p-4 bg-white">
                         <i class="fas fa-smile fa-3x text-warning mb-3"></i>
                         <h3 class="fw-bold">156</h3>
                         <p class="text-muted">Penerima Tertolong</p>
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
     </section>
@@ -161,120 +184,66 @@
             </div>
             
             <div class="row">
-                <!-- Campaign 1 -->
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card campaign-card h-100 shadow-sm">
-                        <div class="position-relative">
-                            <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
-                                 class="card-img-top" alt="Pendidikan" style="height: 200px; object-fit: cover;">
-                            <span class="position-absolute top-0 start-0 m-3 badge bg-success">Pendidikan</span>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">Bantu Pendidikan Anak Yatim</h5>
-                            <p class="card-text text-muted">Bantu anak yatim mendapatkan akses pendidikan yang layak untuk masa depan mereka.</p>
-                            
-                            <div class="progress mb-3" style="height: 8px;">
-                                <div class="progress-bar bg-success" style="width: 75%"></div>
+                <?php foreach ($campaigns as $campaign): ?>
+                    <?php
+                    $badgeClass = 'bg-primary';
+                    switch (strtolower($campaign['kategori'])) {
+                        case 'pendidikan':
+                            $badgeClass = 'bg-success';
+                            break;
+                        case 'kesehatan':
+                            $badgeClass = 'bg-danger';
+                            break;
+                        case 'bencana alam':
+                            $badgeClass = 'bg-warning';
+                            break;
+                        case 'lingkungan':
+                            $badgeClass = 'bg-info';
+                            break;
+                    }
+                    $progress = min(100, round($campaign['progress']));
+                    $daysLeft = max(0, $campaign['days_left']);
+                    ?>
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="card campaign-card h-100 shadow-sm">
+                            <div class="position-relative">
+                                <img src="<?php echo htmlspecialchars($campaign['gambar']); ?>" 
+                                     class="card-img-top" alt="<?php echo htmlspecialchars($campaign['judul_kampanye']); ?>" style="height: 200px; object-fit: cover;">
+                                <span class="position-absolute top-0 start-0 m-3 badge <?php echo $badgeClass; ?>"><?php echo htmlspecialchars($campaign['kategori']); ?></span>
                             </div>
-                            
-                            <div class="d-flex justify-content-between mb-2">
-                                <small>Terkumpul:</small>
-                                <strong>Rp 37.5jt</strong>
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold"><?php echo htmlspecialchars($campaign['judul_kampanye']); ?></h5>
+                                <p class="card-text text-muted"><?php echo htmlspecialchars(substr($campaign['deskripsi'], 0, 100)) . (strlen($campaign['deskripsi']) > 100 ? '...' : ''); ?></p>
+                                
+                                <div class="progress mb-3" style="height: 8px;">
+                                    <div class="progress-bar <?php echo $badgeClass; ?>" style="width: <?php echo $progress; ?>%"></div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mb-2">
+                                    <small>Terkumpul:</small>
+                                    <strong>Rp <?php echo number_format($campaign['dana_terkumpul'], 0, ',', '.'); ?></strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-3">
+                                    <small>Target:</small>
+                                    <strong>Rp <?php echo number_format($campaign['target_dana'], 0, ',', '.'); ?></strong>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mb-4">
+                                    <small><i class="fas fa-users me-1"></i> <?php echo $campaign['donor_count']; ?> donatur</small>
+                                    <small><i class="fas fa-clock me-1"></i> <?php echo $daysLeft; ?> hari lagi</small>
+                                </div>
+                                
+                                <a href="detail.php?id=<?php echo $campaign['id_kampanye']; ?>" class="btn btn-primary w-100">
+                                    <i class="fas fa-heart me-1"></i>Donasi Sekarang
+                                </a>
                             </div>
-                            <div class="d-flex justify-content-between mb-3">
-                                <small>Target:</small>
-                                <strong>Rp 50jt</strong>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between mb-4">
-                                <small><i class="fas fa-users me-1"></i> 125 donatur</small>
-                                <small><i class="fas fa-clock me-1"></i> 15 hari lagi</small>
-                            </div>
-                            
-                            <a href="detail.php?id=1" class="btn btn-primary w-100">
-                                <i class="fas fa-heart me-1"></i>Donasi Sekarang
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Campaign 2 -->
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card campaign-card h-100 shadow-sm">
-                        <div class="position-relative">
-                            <img src="https://images.unsplash.com/photo-1576765974257-b414b9ea0051?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
-                                 class="card-img-top" alt="Kesehatan" style="height: 200px; object-fit: cover;">
-                            <span class="position-absolute top-0 start-0 m-3 badge bg-danger">Kesehatan</span>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">Operasi Jantung untuk Bayi</h5>
-                            <p class="card-text text-muted">Bantu bayi kurang mampu mendapatkan operasi jantung yang menyelamatkan jiwa.</p>
-                            
-                            <div class="progress mb-3" style="height: 8px;">
-                                <div class="progress-bar bg-danger" style="width: 90%"></div>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between mb-2">
-                                <small>Terkumpul:</small>
-                                <strong>Rp 90jt</strong>
-                            </div>
-                            <div class="d-flex justify-content-between mb-3">
-                                <small>Target:</small>
-                                <strong>Rp 100jt</strong>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between mb-4">
-                                <small><i class="fas fa-users me-1"></i> 89 donatur</small>
-                                <small><i class="fas fa-clock me-1"></i> 5 hari lagi</small>
-                            </div>
-                            
-                            <a href="detail.php?id=2" class="btn btn-primary w-100">
-                                <i class="fas fa-heart me-1"></i>Donasi Sekarang
-                            </a>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Campaign 3 -->
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card campaign-card h-100 shadow-sm">
-                        <div class="position-relative">
-                            <img src="https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
-                                 class="card-img-top" alt="Bencana" style="height: 200px; object-fit: cover;">
-                            <span class="position-absolute top-0 start-0 m-3 badge bg-warning">Bencana Alam</span>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold">Bantu Korban Banjir Jakarta</h5>
-                            <p class="card-text text-muted">Bantu keluarga yang terdampak banjir dengan kebutuhan pokok dan tempat tinggal.</p>
-                            
-                            <div class="progress mb-3" style="height: 8px;">
-                                <div class="progress-bar bg-warning" style="width: 60%"></div>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between mb-2">
-                                <small>Terkumpul:</small>
-                                <strong>Rp 120jt</strong>
-                            </div>
-                            <div class="d-flex justify-content-between mb-3">
-                                <small>Target:</small>
-                                <strong>Rp 200jt</strong>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between mb-4">
-                                <small><i class="fas fa-users me-1"></i> 342 donatur</small>
-                                <small><i class="fas fa-clock me-1"></i> 30 hari lagi</small>
-                            </div>
-                            
-                            <a href="detail.php?id=3" class="btn btn-primary w-100">
-                                <i class="fas fa-heart me-1"></i>Donasi Sekarang
-                            </a>
-                        </div>
-                    </div>
-                </div>
+                <?php endforeach; ?>
             </div>
             
             <div class="text-center mt-4">
-                <a href="detail.php?id=1" class="btn btn-outline-primary btn-lg">
+                <a href="kampanye.php" class="btn btn-outline-primary btn-lg">
                     <i class="fas fa-list me-2"></i>Lihat Semua Kampanye
                 </a>
             </div>
@@ -361,10 +330,13 @@
                 <div class="col-lg-2 col-md-6 mb-4">
                     <h5 class="fw-bold mb-3">Tautan Cepat</h5>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="index.php" class="text-muted text-decoration-none">Beranda</a></li>
-                        <li class="mb-2"><a href="detail.php?id=1" class="text-muted text-decoration-none">Kampanye</a></li>
-                        <li class="mb-2"><a href="donatur.php" class="text-muted text-decoration-none">Login</a></li>
-                        <li class="mb-2"><a href="daftar.php" class="text-muted text-decoration-none">Daftar</a></li>
+                        <?php if (Session::isLoggedIn()): ?>
+                            <li class="mb-2"><span class="text-muted">Selamat datang, <?php echo htmlspecialchars(Session::get('user_name')); ?></span></li>
+                            <li class="mb-2"><a href="logout.php" class="text-muted text-decoration-none">Logout</a></li>
+                        <?php else: ?>
+                            <li class="mb-2"><a href="donatur.php" class="text-muted text-decoration-none">Login</a></li>
+                            <li class="mb-2"><a href="daftar.php" class="text-muted text-decoration-none">Daftar</a></li>
+                        <?php endif; ?>
                     </ul>
                 </div>
                 

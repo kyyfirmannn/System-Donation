@@ -168,5 +168,32 @@ class CampaignModel {
         
         return $campaigns;
     }
+
+    // Get campaigns with donor count for display
+    public function getCampaignsForDisplay($limit = 3) {
+        $conn = $this->db->getConnection();
+        $limit = (int)$limit;
+        
+        $sql = "SELECT k.*, o.nama_organisasi,
+                COUNT(DISTINCT d.id_pengguna) as donor_count,
+                DATEDIFF(k.tgl_selesai, CURDATE()) as days_left,
+                (k.dana_terkumpul / k.target_dana * 100) as progress
+                FROM kampanye k 
+                JOIN organisasi o ON k.id_organisasi = o.id_organisasi 
+                LEFT JOIN donasi d ON k.id_kampanye = d.id_kampanye AND d.status = 'berhasil'
+                WHERE k.status = 'aktif' AND k.tgl_selesai >= CURDATE()
+                GROUP BY k.id_kampanye
+                ORDER BY k.dibuat_pada DESC 
+                LIMIT $limit";
+        
+        $result = $conn->query($sql);
+        
+        $campaigns = [];
+        while ($row = $result->fetch_assoc()) {
+            $campaigns[] = $row;
+        }
+        
+        return $campaigns;
+    }
 }
 ?>

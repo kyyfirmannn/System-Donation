@@ -1,51 +1,36 @@
 <?php
-// 1. Tangkap ID dari URL (contoh: detail.php?id=2)
-$id_kampanye = isset($_GET['id']) ? $_GET['id'] : '1';
+require_once __DIR__ . '/../../backend/config/session.php';
+require_once __DIR__ . '/../../backend/models/CampaignModel.php';
+Session::start();
 
-// 2. Data Simulasi (Database Mockup)
-$database_kampanye = [
-  '1' => [
-    'judul'     => 'Bantu Pendidikan Anak Yatim',
-    'kategori'  => 'Pendidikan',
-    'gambar'    => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80',
-    'yayasan'   => 'Yayasan Pendidikan Harapan Bangsa',
-    'deskripsi_yayasan' => 'Yayasan yang fokus pada pendidikan anak-anak kurang mampu',
-    'kontak'    => '021-12345678 | harapanbangsa@email.com',
-    'target'    => 'Rp 50.000.000',
-    'terkumpul' => 'Rp 37.500.000',
-    'persen'    => '75',
-    'donatur'   => '125',
-    'sisa_hari' => '15'
-  ],
-  '2' => [
-    'judul'     => 'Operasi Jantung untuk Bayi',
-    'kategori'  => 'Kesehatan',
-    'gambar'    => 'https://images.unsplash.com/photo-1576765974257-b414b9ea0051?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80',
-    'yayasan'   => 'Klinik Sehat Utama',
-    'deskripsi_yayasan' => 'Membantu biaya medis bagi keluarga prasejahtera',
-    'kontak'    => '021-88889999 | kliniksehat@email.com',
-    'target'    => 'Rp 100.000.000',
-    'terkumpul' => 'Rp 90.000.000',
-    'persen'    => '90',
-    'donatur'   => '89',
-    'sisa_hari' => '5'
-  ],
-  '3' => [
-    'judul'     => 'Bantu Korban Banjir Jakarta',
-    'kategori'  => 'Bencana Alam',
-    'gambar'    => 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80',
-    'yayasan'   => 'Relawan Cepat Tanggap',
-    'deskripsi_yayasan' => 'Aksi cepat tanggap untuk bencana alam di seluruh Indonesia',
-    'kontak'    => '021-77776666 | relawan@email.com',
-    'target'    => 'Rp 200.000.000',
-    'terkumpul' => 'Rp 120.000.000',
-    'persen'    => '60',
-    'donatur'   => '342',
-    'sisa_hari' => '30'
-  ]
-];
+// 1. Tangkap ID dari URL
+$id_kampanye = isset($_GET['id']) ? (int)$_GET['id'] : 1;
 
-$data = isset($database_kampanye[$id_kampanye]) ? $database_kampanye[$id_kampanye] : $database_kampanye['1'];
+$campaignModel = new CampaignModel();
+$data = $campaignModel->getCampaignById($id_kampanye);
+
+if (!$data) {
+    header('Location: kampanye.php');
+    exit;
+}
+
+// Hitung progress dan days left
+$progress = min(100, round(($data['dana_terkumpul'] / $data['target_dana']) * 100));
+$daysLeft = max(0, (strtotime($data['tgl_selesai']) - time()) / (60*60*24));
+
+// Untuk kompatibilitas dengan template lama
+$data['persen'] = $progress;
+$data['donatur'] = htmlspecialchars(Session::get('user_name'));// Placeholder, ganti dengan query sebenarnya jika ada tabel donatur
+$data['sisa_hari'] = ceil($daysLeft);
+$data['target'] = 'Rp ' . number_format($data['target_dana'], 0, ',', '.');
+$data['terkumpul'] = 'Rp ' . number_format($data['dana_terkumpul'], 0, ',', '.');
+$data['judul'] = $data['judul_kampanye'];
+$data['yayasan'] = $data['nama_organisasi'];
+$data['deskripsi_yayasan'] = 'Organisasi yang berkomitmen membantu masyarakat';
+$data['kontak'] = $data['no_kontak'] . ' | ' . $data['email_kontak'];
+$data['kategori'] = $data['kategori'] ?? 'Umum';
+$data['gambar'] = $data['gambar'] ?? 'https://images.unsplash.com/photo-1593113630400-ea4288922497?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80';
+
 $actual_link = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 ?>
 

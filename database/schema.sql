@@ -46,6 +46,8 @@ CREATE TABLE `kampanye` (
   `tgl_mulai` date DEFAULT NULL,
   `tgl_selesai` date DEFAULT NULL,
   `status` enum('aktif','selesai','dibatalkan') DEFAULT 'aktif',
+  `kategori` varchar(50) DEFAULT 'Umum',
+  `gambar` varchar(255) DEFAULT 'https://images.unsplash.com/photo-1593113630400-ea4288922497?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
   `dibuat_pada` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id_kampanye`),
   KEY `id_organisasi` (`id_organisasi`),
