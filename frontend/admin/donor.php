@@ -1,6 +1,5 @@
 <?php
 // frontend/admin/donor.php
-session_start();
 require_once __DIR__ . '/../../backend/config/database.php';
 require_once __DIR__ . '/../../backend/models/UserModel.php';
 require_once __DIR__ . '/../../backend/models/DonationModel.php';
@@ -11,22 +10,11 @@ $donationModel = new DonationModel();
 // Handle delete donor
 if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $id = (int)$_GET['delete'];
-    $conn = (new Database())->getConnection();
     
-    // Cek apakah donor punya donasi
-    $checkSql = "SELECT COUNT(*) as total FROM donasi WHERE id_pengguna = $id";
-    $checkResult = $conn->query($checkSql);
-    $hasDonations = $checkResult->fetch_assoc()['total'] > 0;
-    
-    if ($hasDonations) {
-        $_SESSION['error'] = "Tidak dapat menghapus donor yang memiliki riwayat donasi";
+    if ($userModel->deleteDonor($id)) {
+        $_SESSION['success'] = "Donor berhasil dihapus";
     } else {
-        $sql = "DELETE FROM users WHERE id_pengguna = $id AND role = 'donatur'";
-        if ($conn->query($sql)) {
-            $_SESSION['success'] = "Donor berhasil dihapus";
-        } else {
-            $_SESSION['error'] = "Gagal menghapus donor";
-        }
+        $_SESSION['error'] = "Tidak dapat menghapus donor yang memiliki riwayat donasi";
     }
     header('Location: donor.php');
     exit;
@@ -36,10 +24,10 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
 $search = $_GET['search'] ?? '';
 $filter = $_GET['filter'] ?? 'all'; // all, has_donations, no_donations
 
-// Get all donors
-$donors = $userModel->getAllDonors();
+// Get all donors WITH statistics - menggunakan metode baru
+$donors = $userModel->getAllDonorsWithStats();
 
-// Apply filters
+// Apply search filter
 if ($search) {
     $donors = array_filter($donors, function($donor) use ($search) {
         return stripos($donor['nama_pengguna'], $search) !== false ||
@@ -48,44 +36,27 @@ if ($search) {
     });
 }
 
-// Get donation statistics for each donor
-$donorStats = [];
-$totalDonations = 0;
-$totalAmount = 0;
-
-foreach ($donors as &$donor) {
-    $conn = (new Database())->getConnection();
-    $donorId = $donor['id_pengguna'];
-    
-    // Count successful donations
-    $sql = "SELECT COUNT(*) as count, SUM(jumlah_donasi) as total 
-            FROM donasi 
-            WHERE id_pengguna = $donorId AND status = 'berhasil'";
-    $result = $conn->query($sql);
-    $stats = $result->fetch_assoc();
-    
-    $donationCount = $stats['count'] ?? 0;
-    $donationTotal = $stats['total'] ?? 0;
-    
-    $donor['donation_count'] = $donationCount;
-    $donor['donation_total'] = $donationTotal;
-    
-    $totalDonations += $donationCount;
-    $totalAmount += $donationTotal;
-    
-    // Apply additional filters
-    if ($filter === 'has_donations' && $donationCount == 0) {
-        unset($donor);
-        continue;
-    }
-    if ($filter === 'no_donations' && $donationCount > 0) {
-        unset($donor);
-        continue;
-    }
+// Apply additional filters
+if ($filter === 'has_donations') {
+    $donors = array_filter($donors, function($donor) {
+        return $donor['donation_count'] > 0;
+    });
+} elseif ($filter === 'no_donations') {
+    $donors = array_filter($donors, function($donor) {
+        return $donor['donation_count'] == 0;
+    });
 }
 
 // Re-index array
 $donors = array_values($donors);
+
+// Calculate totals
+$totalDonations = 0;
+$totalAmount = 0;
+foreach ($donors as $donor) {
+    $totalDonations += $donor['donation_count'];
+    $totalAmount += $donor['donation_total'];
+}
 
 // Get total donors count
 $totalDonors = count($donors);
@@ -116,7 +87,7 @@ function getInitials($name) {
 function getAvatarColor($name) {
     $colors = [
         'bg-primary', 'bg-success', 'bg-danger', 'bg-warning', 
-        'bg-info', 'bg-dark', 'bg-secondary', 'bg-primary'
+        'bg-info', 'bg-dark', 'bg-secondary'
     ];
     $hash = crc32($name) % count($colors);
     return $colors[$hash];
@@ -190,13 +161,15 @@ function getAvatarColor($name) {
             </form>
         </div>
         <div class="col-md-4">
-            <form method="GET" action="" class="input-group">
-                <select name="filter" class="form-select" onchange="this.form.submit()">
-                    <option value="all" <?php echo $filter === 'all' ? 'selected' : ''; ?>>Semua Donor</option>
-                    <option value="has_donations" <?php echo $filter === 'has_donations' ? 'selected' : ''; ?>>Sudah Donasi</option>
-                    <option value="no_donations" <?php echo $filter === 'no_donations' ? 'selected' : ''; ?>>Belum Donasi</option>
-                </select>
-                <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
+            <form method="GET" action="">
+                <div class="input-group">
+                    <select name="filter" class="form-select" onchange="this.form.submit()">
+                        <option value="all" <?php echo $filter === 'all' ? 'selected' : ''; ?>>Semua Donor</option>
+                        <option value="has_donations" <?php echo $filter === 'has_donations' ? 'selected' : ''; ?>>Sudah Donasi</option>
+                        <option value="no_donations" <?php echo $filter === 'no_donations' ? 'selected' : ''; ?>>Belum Donasi</option>
+                    </select>
+                    <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
+                </div>
             </form>
         </div>
     </div>
@@ -255,7 +228,7 @@ function getAvatarColor($name) {
                                         <i class="bi bi-envelope me-1"></i> 
                                         <?php echo htmlspecialchars($donor['email']); ?>
                                     </div>
-                                    <?php if ($donor['no_hp']): ?>
+                                    <?php if (!empty($donor['no_hp'])): ?>
                                     <div class="text-muted">
                                         <i class="bi bi-telephone me-1"></i> 
                                         <?php echo htmlspecialchars($donor['no_hp']); ?>
@@ -263,7 +236,7 @@ function getAvatarColor($name) {
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-muted" style="max-width: 200px;">
-                                    <?php echo htmlspecialchars($donor['alamat'] ?: '-'); ?>
+                                    <?php echo !empty($donor['alamat']) ? htmlspecialchars($donor['alamat']) : '-'; ?>
                                 </td>
                                 <td>
                                     <?php echo $joinDate; ?>
@@ -309,24 +282,6 @@ function getAvatarColor($name) {
                     </tbody>
                 </table>
             </div>
-            
-            <?php if (count($donors) > 10): ?>
-                <div class="p-3 border-top">
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-center mb-0">
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#" tabindex="-1">Previous</a>
-                            </li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">Next</a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-            <?php endif; ?>
         </div>
     </div>
     
@@ -337,25 +292,12 @@ function getAvatarColor($name) {
                 <div class="card-body">
                     <h6 class="fw-bold mb-3">Top 5 Donor</h6>
                     <?php
-                    // Get top 5 donors by donation amount
-                    $conn = (new Database())->getConnection();
-                    $sql = "SELECT u.id_pengguna, u.nama_pengguna, u.email,
-                            COUNT(d.id_donasi) as donation_count,
-                            SUM(d.jumlah_donasi) as donation_total
-                            FROM users u
-                            LEFT JOIN donasi d ON u.id_pengguna = d.id_pengguna 
-                            AND d.status = 'berhasil'
-                            WHERE u.role = 'donatur'
-                            GROUP BY u.id_pengguna
-                            ORDER BY donation_total DESC
-                            LIMIT 5";
-                    $result = $conn->query($sql);
+                    // Get top 5 donors using model method
+                    $topDonors = $userModel->getTopDonors(5);
                     
-                    if ($result->num_rows > 0):
+                    if (!empty($topDonors)):
                         $rank = 1;
-                        while ($row = $result->fetch_assoc()):
-                            $donationTotal = $row['donation_total'] ?? 0;
-                            if ($donationTotal > 0):
+                        foreach ($topDonors as $donor):
                     ?>
                     <div class="d-flex align-items-center mb-3">
                         <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" 
@@ -364,18 +306,17 @@ function getAvatarColor($name) {
                         </div>
                         <div class="flex-grow-1">
                             <div class="d-flex justify-content-between">
-                                <strong class="small"><?php echo htmlspecialchars($row['nama_pengguna']); ?></strong>
-                                <span class="text-primary fw-bold small"><?php echo formatRupiah($donationTotal); ?></span>
+                                <strong class="small"><?php echo htmlspecialchars($donor['nama_pengguna']); ?></strong>
+                                <span class="text-primary fw-bold small"><?php echo formatRupiah($donor['donation_total']); ?></span>
                             </div>
                             <small class="text-muted">
-                                <?php echo $row['donation_count']; ?> donasi
+                                <?php echo $donor['donation_count']; ?> donasi
                             </small>
                         </div>
                     </div>
                     <?php 
                             $rank++;
-                            endif;
-                        endwhile;
+                        endforeach;
                     else:
                     ?>
                     <div class="text-center py-3">
@@ -392,19 +333,12 @@ function getAvatarColor($name) {
                 <div class="card-body">
                     <h6 class="fw-bold mb-3">Donor Baru (30 Hari Terakhir)</h6>
                     <?php
-                    // Get new donors in last 30 days
-                    $sql = "SELECT u.*, 
-                            (SELECT COUNT(*) FROM donasi d WHERE d.id_pengguna = u.id_pengguna AND d.status = 'berhasil') as donation_count
-                            FROM users u
-                            WHERE u.role = 'donatur'
-                            AND u.dibuat_pada >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-                            ORDER BY u.dibuat_pada DESC
-                            LIMIT 5";
-                    $result = $conn->query($sql);
+                    // Get new donors using model method
+                    $newDonors = $userModel->getNewDonors(30, 5);
                     
-                    if ($result->num_rows > 0):
-                        while ($row = $result->fetch_assoc()):
-                            $daysAgo = floor((time() - strtotime($row['dibuat_pada'])) / (60 * 60 * 24));
+                    if (!empty($newDonors)):
+                        foreach ($newDonors as $donor):
+                            $daysAgo = floor((time() - strtotime($donor['dibuat_pada'])) / (60 * 60 * 24));
                     ?>
                     <div class="d-flex align-items-center mb-3">
                         <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" 
@@ -413,19 +347,19 @@ function getAvatarColor($name) {
                         </div>
                         <div class="flex-grow-1">
                             <div class="d-flex justify-content-between">
-                                <strong class="small"><?php echo htmlspecialchars($row['nama_pengguna']); ?></strong>
+                                <strong class="small"><?php echo htmlspecialchars($donor['nama_pengguna']); ?></strong>
                                 <span class="badge bg-success bg-opacity-10 text-success small">
                                     <?php echo $daysAgo; ?> hari lalu
                                 </span>
                             </div>
                             <small class="text-muted">
-                                <?php echo $row['donation_count'] > 0 ? 
-                                    $row['donation_count'] . ' donasi' : 'Belum donasi'; ?>
+                                <?php echo $donor['donation_count'] > 0 ? 
+                                    $donor['donation_count'] . ' donasi' : 'Belum donasi'; ?>
                             </small>
                         </div>
                     </div>
                     <?php 
-                        endwhile;
+                        endforeach;
                     else:
                     ?>
                     <div class="text-center py-3">
@@ -748,6 +682,5 @@ $(document).ready(function() {
     $('input[name="search"]').focus();
 });
 </script>
-
 </body>
 </html>
