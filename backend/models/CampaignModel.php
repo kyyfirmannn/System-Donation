@@ -195,5 +195,26 @@ class CampaignModel {
         
         return $campaigns;
     }
+
+    // Get recent campaigns
+    public function getRecentCampaigns($limit = 2) {
+        $conn = $this->db->getConnection();
+        $limit = (int)$limit;
+        
+        $sql = "SELECT k.*, o.nama_organisasi
+                FROM kampanye k 
+                JOIN organisasi o ON k.id_organisasi = o.id_organisasi 
+                ORDER BY k.dibuat_pada DESC 
+                LIMIT $limit";
+        
+        $result = $conn->query($sql);
+        
+        $campaigns = [];
+        while ($row = $result->fetch_assoc()) {
+            $campaigns[] = $row;
+        }
+        
+        return $campaigns;
+    }
 }
 ?>

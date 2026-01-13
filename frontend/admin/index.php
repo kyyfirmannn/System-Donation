@@ -8,7 +8,30 @@ require_once '../../backend/models/UserModel.php';
 
 <?php include('header.php'); ?>
 
-<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+<?php
+// Helper function untuk format waktu
+function timeAgo($datetime) {
+    $now = new DateTime();
+    $ago = new DateTime($datetime);
+    $diff = $now->diff($ago);
+
+    if ($diff->y > 0) {
+        return $diff->y . ' tahun lalu';
+    } elseif ($diff->m > 0) {
+        return $diff->m . ' bulan lalu';
+    } elseif ($diff->d > 0) {
+        return $diff->d . ' hari lalu';
+    } elseif ($diff->h > 0) {
+        return $diff->h . ' jam lalu';
+    } elseif ($diff->i > 0) {
+        return $diff->i . ' menit lalu';
+    } else {
+        return 'Baru saja';
+    }
+}
+?>
+
+<main class="col-md-12 ms-sm-auto col-lg-12 px-md-4 py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="fw-bold mb-0">Dashboard Overview</h4>
@@ -59,6 +82,11 @@ require_once '../../backend/models/UserModel.php';
         $distribusiAmounts[] = $campaign['dana_terkumpul'];
     }
 
+    // Data real untuk dashboard
+    $donationGrowth = $donationModel->getDonationGrowthPercentage();
+    $donorsThisMonth = $donationModel->countDonorsThisMonth();
+    $paymentMethods = $donationModel->getPaymentMethodStatistics();
+
     // Format Rupiah
     function formatRupiah($angka) {
         if ($angka >= 1000000000) {
@@ -79,10 +107,7 @@ require_once '../../backend/models/UserModel.php';
                 <h4 class="fw-bold mb-2"><?php echo formatRupiah($totalDonations); ?></h4>
                 <small class="text-success">
                     <i class="bi bi-arrow-up"></i> 
-                    <?php 
-                    // Simulasi persentase kenaikan (bisa diganti dengan data real)
-                    echo '+12.5% dari bulan lalu'; 
-                    ?>
+                    <?php echo $donationGrowth; ?>% dari bulan lalu
                 </small>
             </div>
         </div>
@@ -91,11 +116,7 @@ require_once '../../backend/models/UserModel.php';
                 <h6 class="text-muted small mb-2">Total Donor</h6>
                 <h4 class="fw-bold mb-2"><?php echo $totalDonors; ?></h4>
                 <small class="text-primary">
-                    <?php 
-                    // Donor bulan ini (simulasi)
-                    $donorBulanIni = rand(5, 15);
-                    echo "+" . $donorBulanIni . " donor bulan ini"; 
-                    ?>
+                    <?php echo $donorsThisMonth; ?> donor bulan ini
                 </small>
             </div>
         </div>
@@ -256,27 +277,21 @@ require_once '../../backend/models/UserModel.php';
                     </div>
                 </div>
                 <div class="mt-3">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="small">Transfer Bank</span>
-                        <span class="small">45%</span>
-                    </div>
-                    <div class="progress mb-2" style="height: 6px;">
-                        <div class="progress-bar bg-primary" style="width: 45%"></div>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="small">E-Wallet</span>
-                        <span class="small">35%</span>
-                    </div>
-                    <div class="progress mb-2" style="height: 6px;">
-                        <div class="progress-bar bg-info" style="width: 35%"></div>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="small">QRIS</span>
-                        <span class="small">20%</span>
-                    </div>
-                    <div class="progress" style="height: 6px;">
-                        <div class="progress-bar bg-success" style="width: 20%"></div>
-                    </div>
+                    <?php
+                    $progressColors = ['bg-primary', 'bg-info', 'bg-success', 'bg-warning', 'bg-danger'];
+                    foreach ($paymentMethods as $index => $method) {
+                        $colorClass = $progressColors[$index % count($progressColors)];
+                        ?>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small"><?php echo ucfirst($method['metode_pembayaran']); ?></span>
+                            <span class="small"><?php echo $method['percentage']; ?>%</span>
+                        </div>
+                        <div class="progress mb-2" style="height: 6px;">
+                            <div class="progress-bar <?php echo $colorClass; ?>" style="width: <?php echo $method['percentage']; ?>%"></div>
+                        </div>
+                        <?php
+                    }
+                    ?>
                 </div>
             </div>
         </div>
@@ -286,15 +301,42 @@ require_once '../../backend/models/UserModel.php';
                 <h6 class="fw-bold mb-3">Aktivitas Terbaru</h6>
                 <div class="timeline">
                     <?php
-                    // Simulasi aktivitas (bisa diganti dengan data real)
-                    $activities = [
-                        ['icon' => 'bi-person-plus', 'color' => 'success', 'text' => 'Donatur baru mendaftar: Budi Santoso', 'time' => '2 jam lalu'],
-                        ['icon' => 'bi-cash-coin', 'color' => 'primary', 'text' => 'Donasi Rp 500.000 diterima untuk kampanye Bantu Anak Sekolah', 'time' => '4 jam lalu'],
-                        ['icon' => 'bi-check-circle', 'color' => 'info', 'text' => 'Kampanye baru "Tanam 1000 Pohon" dipublikasi', 'time' => '1 hari lalu'],
-                        ['icon' => 'bi-envelope', 'color' => 'warning', 'text' => 'Feedback baru diterima dari Andi Saputra', 'time' => '2 hari lalu'],
-                    ];
+                    // Ambil aktivitas terbaru dari database
+                    $recentActivities = $donationModel->getRecentActivities(2);
+                    $recentCampaigns = $campaignModel->getRecentCampaigns(2);
                     
-                    foreach ($activities as $activity) {
+                    // Gabungkan dan sort berdasarkan tanggal
+                    $allActivities = [];
+                    
+                    foreach ($recentActivities as $activity) {
+                        $allActivities[] = [
+                            'icon' => 'bi-cash-coin',
+                            'color' => 'primary',
+                            'text' => $activity['text'],
+                            'time' => timeAgo($activity['date']),
+                            'date' => $activity['date']
+                        ];
+                    }
+                    
+                    foreach ($recentCampaigns as $campaign) {
+                        $allActivities[] = [
+                            'icon' => 'bi-check-circle',
+                            'color' => 'info',
+                            'text' => 'Kampanye baru "' . $campaign['judul_kampanye'] . '" dipublikasi',
+                            'time' => timeAgo($campaign['dibuat_pada']),
+                            'date' => $campaign['dibuat_pada']
+                        ];
+                    }
+                    
+                    // Sort by date descending
+                    usort($allActivities, function($a, $b) {
+                        return strtotime($b['date']) - strtotime($a['date']);
+                    });
+                    
+                    // Take top 4
+                    $allActivities = array_slice($allActivities, 0, 4);
+                    
+                    foreach ($allActivities as $activity) {
                         ?>
                         <div class="d-flex mb-3">
                             <div class="rounded-circle bg-<?php echo $activity['color']; ?> bg-opacity-10 d-flex align-items-center justify-content-center" 
@@ -307,6 +349,10 @@ require_once '../../backend/models/UserModel.php';
                             </div>
                         </div>
                         <?php
+                    }
+                    
+                    if (empty($allActivities)) {
+                        echo '<p class="text-muted small">Belum ada aktivitas terbaru</p>';
                     }
                     ?>
                 </div>

@@ -85,9 +85,6 @@ $pendingDonations = $donationModel->countDonations('pending');
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'donor.php' ? 'active' : ''; ?>" 
                                href="donor.php">
                                 <i class="bi bi-people me-2"></i> Donatur
-                                <?php if($pendingDonations > 0): ?>
-                                <span class="badge bg-danger badge-notification"><?php echo $pendingDonations; ?></span>
-                                <?php endif; ?>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -96,12 +93,12 @@ $pendingDonations = $donationModel->countDonations('pending');
                                 <i class="bi bi-building me-2"></i> Organisasi
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <!-- <li class="nav-item">
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'kategori.php' ? 'active' : ''; ?>" 
                                href="kategori.php">
                                 <i class="bi bi-tags me-2"></i> Kategori
                             </a>
-                        </li>
+                        </li> -->
                         <li class="nav-item mt-4">
                             <a class="nav-link text-white bg-danger bg-opacity-25" href="../user/index.php">
                                 <i class="bi bi-box-arrow-right me-2"></i> Logout
