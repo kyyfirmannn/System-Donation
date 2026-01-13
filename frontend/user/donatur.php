@@ -84,6 +84,9 @@ $redirect = isset($_GET['redirect']) ? $_GET['redirect'] : 'index.php';
               <?php if (isset($_GET['amount'])): ?>
                 <input type="hidden" name="amount" value="<?php echo htmlspecialchars($_GET['amount']); ?>">
               <?php endif; ?>
+              <?php if (isset($_GET['id_kampanye'])): ?>
+                <input type="hidden" name="id_kampanye" value="<?php echo htmlspecialchars($_GET['id_kampanye']); ?>">
+              <?php endif; ?>
               <div class="mb-3">
                 <label class="form-label small fw-bold text-muted">EMAIL</label>
                 <input type="email" name="email" class="form-control form-control-custom" placeholder="nama@email.com" required>

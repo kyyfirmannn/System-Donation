@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../backend/config/session.php';
 $email = $_POST['email'] ?? '';
 $password = $_POST['password'] ?? '';
 $amount = $_POST['amount'] ?? null;
+$id_kampanye = $_POST['id_kampanye'] ?? 1;
 $redirect = $_POST['redirect'] ?? 'index.php';
 
 $um = new UserModel();
@@ -16,7 +17,7 @@ if ($user) {
     Session::set('role', $user['role']);
 
     if ($amount) {
-        header('Location: pembayaran.php?nominal=' . urlencode($amount));
+        header('Location: pembayaran.php?nominal=' . urlencode($amount) . '&id_kampanye=' . urlencode($id_kampanye));
         exit;
     }
 

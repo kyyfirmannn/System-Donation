@@ -1,4 +1,9 @@
 <!DOCTYPE html>
+<?php
+require_once __DIR__ . '/../../backend/config/session.php';
+Session::start();
+$isLoggedIn = Session::isLoggedIn();
+?>
 <html lang="id">
 
 <head>
@@ -176,7 +181,13 @@
     });
     btn.onclick = () => {
       const amount = custom.value || document.querySelector('input[name="nominal"]:checked').value;
-      window.location.href = `donatur.php?amount=${amount}`;
+      const urlParams = new URLSearchParams(window.location.search);
+      const id_kampanye = urlParams.get('id') || 1;
+      <?php if ($isLoggedIn): ?>
+        window.location.href = `pembayaran.php?nominal=${amount}&id_kampanye=${id_kampanye}`;
+      <?php else: ?>
+        window.location.href = `donatur.php?amount=${amount}&id_kampanye=${id_kampanye}`;
+      <?php endif; ?>
     };
   </script>
 </body>

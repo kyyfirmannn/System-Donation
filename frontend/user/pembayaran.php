@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../backend/models/UserModel.php';
 Session::start();
 
 $nominal = $_REQUEST['nominal'] ?? 0;
+$id_kampanye = $_REQUEST['id_kampanye'] ?? 1;
 $user = null;
 if (Session::isLoggedIn()) {
   $um = new UserModel();
@@ -136,6 +137,7 @@ if (Session::isLoggedIn()) {
 
           <form action="proses-donasi.php" method="POST">
             <input type="hidden" name="nominal" value="<?= htmlspecialchars($nominal) ?>">
+            <input type="hidden" name="id_kampanye" value="<?= htmlspecialchars($id_kampanye) ?>">
             <?php if ($user): ?>
               <input type="hidden" name="nama" value="<?= htmlspecialchars($user['nama_pengguna']) ?>">
               <input type="hidden" name="email" value="<?= htmlspecialchars($user['email']) ?>">

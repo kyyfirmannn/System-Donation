@@ -2,11 +2,14 @@
 require_once __DIR__ . '/../../backend/config/session.php';
 require_once __DIR__ . '/../../backend/models/CampaignModel.php';
 require_once __DIR__ . '/../../backend/models/UserModel.php';
+require_once __DIR__ . '/../../backend/models/DonationModel.php';
 Session::start();
 
 $campaignModel = new CampaignModel();
 $campaigns = $campaignModel->getCampaignsForDisplay(3);
 $userModel = new UserModel();
+$donationModel = new DonationModel();
+$stats = $donationModel->getStatistics();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -158,7 +161,16 @@ $userModel = new UserModel();
                 <div class="col-md-4 col-6 mb-4">
                     <div class="stat-card p-4 bg-white">
                         <i class="fas fa-money-bill-wave fa-3x text-success mb-3"></i>
-                        <h3 class="fw-bold">Rp 850Jt+</h3>
+                        <h3 class="fw-bold"><?php 
+                            $total = $stats['total_donations'] ?? 0;
+                            if ($total >= 1000000000) {
+                                echo 'Rp ' . number_format($total / 1000000000, 1) . 'M';
+                            } elseif ($total >= 1000000) {
+                                echo 'Rp ' . number_format($total / 1000000, 1) . 'Jt';
+                            } else {
+                                echo 'Rp ' . number_format($total, 0, ',', '.');
+                            }
+                        ?></h3>
                         <p class="text-muted">Terkumpul</p>
                     </div>
                 </div>
